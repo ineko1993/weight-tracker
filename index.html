@@ -72,15 +72,15 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .pb-fill { height:100%; border-radius:6px; transition:width 0.5s ease; }
 .toast { position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-80px); background:#27500A; color:#EAF3DE; padding:10px 20px; border-radius:var(--r); font-size:13px; font-weight:500; white-space:nowrap; transition:transform 0.3s ease,opacity 0.3s ease; opacity:0; z-index:999; pointer-events:none; }
 .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
-.sticker-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:12px; }
-.sticker { position:relative; border-radius:16px; padding:12px 8px 10px; text-align:center; cursor:default; transition:transform 0.15s; animation:pop 0.3s ease; box-shadow: 0 3px 8px rgba(0,0,0,0.13), 0 1px 3px rgba(0,0,0,0.08); }
+.sticker-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:12px; overflow:visible; }
+.sticker { position:relative; border-radius:16px; padding:12px 8px 10px; text-align:center; cursor:pointer; transition:transform 0.15s; animation:pop 0.3s ease; box-shadow: 0 3px 8px rgba(0,0,0,0.13), 0 1px 3px rgba(0,0,0,0.08); overflow:visible; }
 .sticker:hover { transform:scale(1.06) rotate(-1deg); }
 @keyframes pop { 0%{transform:scale(0.7);opacity:0} 80%{transform:scale(1.08)} 100%{transform:scale(1);opacity:1} }
 .sticker-date { font-size:10px; font-weight:500; opacity:0.7; margin-bottom:4px; letter-spacing:0.3px; }
 .sticker-icon { font-size:22px; line-height:1; margin-bottom:4px; }
 .sticker-weight { font-size:15px; font-weight:700; line-height:1.1; }
 .sticker-unit { font-size:10px; opacity:0.65; }
-.sticker-del { position:absolute; top:4px; right:4px; width:16px; height:16px; border-radius:50%; background:rgba(0,0,0,0.12); border:none; font-size:10px; line-height:16px; text-align:center; cursor:pointer; opacity:0; transition:opacity 0.15s; color:inherit; padding:0; }
+.sticker-del { position:absolute; top:4px; right:4px; width:16px; height:16px; border-radius:50%; background:rgba(0,0,0,0.12); border:none; font-size:10px; line-height:16px; text-align:center; cursor:pointer; opacity:0; transition:opacity 0.15s; color:inherit; padding:0; z-index:2; }
 .sticker:hover .sticker-del { opacity:1; }
 .sticker-del:hover { background:rgba(226,75,74,0.25); }
 .login-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; }
@@ -89,7 +89,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .login-card p { font-size:13px; color:var(--t2); margin-bottom:1.5rem; }
 .login-input { width:100%; padding:10px 12px; font-size:15px; border:0.5px solid var(--bd); border-radius:var(--r); background:var(--bg2); color:var(--t1); outline:none; text-align:center; letter-spacing:1px; margin-bottom:12px; }
 .login-input:focus { border-color:var(--bd2); }
-.login-hint { font-size:11px; color:var(--t3); margin-top:8px; }</style>
+.login-hint { font-size:11px; color:var(--t3); margin-top:8px; }
+.sticker-compare-badge { position:absolute; bottom:4px; left:50%; transform:translateX(-50%); background:#185FA5; color:#E6F1FB; font-size:9px; font-weight:500; padding:1px 6px; border-radius:10px; white-space:nowrap; }
+.sticker-popup { display:none; position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%); background:#5f5e5a; color:#fff; font-size:11px; font-weight:500; padding:6px 12px; border-radius:20px; white-space:nowrap; cursor:pointer; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,0.25); }
+.sticker-popup:hover { background:#444441; }
+.sticker-popup::after { content:""; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:#5f5e5a; }</style>
 </head>
 <body>
 <div class="toast" id="toast"></div>
@@ -109,6 +113,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
   <div class="sync-bar">
     <span id="user-label" style="font-size:12px;color:var(--t3);margin-right:auto"></span>
+    <span style="font-size:11px;color:var(--t3);margin-right:8px">更新於 2025-04-17</span>
     <div class="sync-dot" id="sync-dot"></div>
     <span id="sync-label">連線中...</span>
     <button onclick="doLogout()" style="background:none;border:none;font-size:11px;color:var(--t3);cursor:pointer;padding:2px 6px;border-radius:4px;margin-left:6px">登出</button>
@@ -127,18 +132,31 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <div class="mc"><div class="lbl">最新體脂</div><div class="val" id="s-fat">--</div><div class="sub">%</div></div>
       <div class="mc"><div class="lbl">BMI 值</div><div class="val" id="s-bmi">--</div><div class="sub" id="s-bmi-lbl">--</div></div>
     </div>
-    <div class="g2">
-      <div class="mc"><div class="lbl">體重總變化</div><div class="val" id="d-w">--<span style="font-size:13px;font-weight:400;color:var(--t2);margin-left:3px">kg</span></div><div class="sub" id="d-w-sub">--</div></div>
-      <div class="mc"><div class="lbl">體脂總變化</div><div class="val" id="d-f">--<span style="font-size:13px;font-weight:400;color:var(--t2);margin-left:3px">%</span></div><div class="sub" id="d-f-sub">--</div></div>
-    </div>
-    <div class="card">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
-        <h3 style="margin:0">目標達成進度</h3>
-        <button id="eye-btn" onclick="toggleGoalVisibility()" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--t2);display:flex;align-items:center;" title="顯示/隱藏數值">
-          <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-        </button>
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:10px;margin-bottom:1rem;align-items:start;">
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="padding:1rem;border-left:3px solid #3B6D11;border-radius:0 var(--r) var(--r) 0;background:var(--bg1);border-top:0.5px solid var(--bd);border-right:0.5px solid var(--bd);border-bottom:0.5px solid var(--bd);">
+          <div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">體重總變化</div>
+          <div class="val" id="d-w" style="font-size:20px">--<span style="font-size:12px;font-weight:400;color:var(--t2);margin-left:3px">kg</span></div>
+          <div style="font-size:11px;color:var(--t3);margin-top:4px" id="d-w-sub">--</div>
+        </div>
+        <div style="padding:1rem;border-left:3px solid #1D9E75;border-radius:0 var(--r) var(--r) 0;background:var(--bg1);border-top:0.5px solid var(--bd);border-right:0.5px solid var(--bd);border-bottom:0.5px solid var(--bd);">
+          <div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">體脂總變化</div>
+          <div class="val" id="d-f" style="font-size:20px">--<span style="font-size:12px;font-weight:400;color:var(--t2);margin-left:3px">%</span></div>
+          <div style="font-size:11px;color:var(--t3);margin-top:4px" id="d-f-sub">--</div>
+        </div>
       </div>
-      <div id="goal-progress"><div style="font-size:13px;color:var(--t3)">尚未設定目標，請至「設定」頁面輸入目標體重與體脂率。</div></div>
+      <div class="card" style="margin-bottom:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+          <h3 style="margin:0">目標達成進度</h3>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <span id="goal-encouragement" style="font-size:12px;color:var(--t2)"></span>
+            <button id="eye-btn" onclick="toggleGoalVisibility()" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--t2);display:flex;align-items:center;" title="顯示/隱藏數值">
+            <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <div id="goal-progress"><div style="font-size:13px;color:var(--t3)">尚未設定目標，請至「設定」頁面輸入目標體重與體脂率。</div></div>
+      </div>
     </div>
     <div class="card">
       <h3>BMI 狀態</h3>
@@ -197,7 +215,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
           </button>
         </div>
       </div>
-      <p style="font-size:12px;color:var(--t3);margin-bottom:1rem">每次記錄都是一張貼紙，繼續加油！</p>
+      <p style="font-size:12px;color:var(--t3);margin-bottom:1rem">可以點擊貼紙來更改比較體重的參考對象</p>
       <div id="history-list"><div class="empty">尚無紀錄，快去新增第一筆吧！</div></div>
     </div>
   </div>
@@ -365,6 +383,7 @@ function pctColor(p) { return p>=100?'#639922':p>=60?'#1D9E75':p>=30?'#BA7517':'
 
 let goalVisible = true;
 let stickerWeightVisible = true;
+let compareDate = null;
 
 window.toggleGoalVisibility = function() {
   goalVisible = !goalVisible;
@@ -376,6 +395,25 @@ window.toggleGoalVisibility = function() {
   }
   renderGoalProgress();
 };
+
+window.togglePopup = function(el, event) {
+  event.stopPropagation();
+  const popup = el.querySelector('.sticker-popup');
+  if (!popup) return;
+  const isVisible = popup.style.display === 'block';
+  document.querySelectorAll('.sticker-popup').forEach(p => p.style.display = 'none');
+  if (!isVisible) popup.style.display = 'block';
+};
+
+window.setCompare = function(date) {
+  compareDate = (compareDate === date) ? null : date;
+  renderHistory();
+  renderDashboard();
+};
+
+document.addEventListener('click', () => {
+  document.querySelectorAll('.sticker-popup').forEach(p => p.style.display = 'none');
+});
 
 window.toggleStickerVisibility = function() {
   stickerWeightVisible = !stickerWeightVisible;
@@ -393,20 +431,38 @@ function renderGoalProgress() {
   if (!goal.weight && !goal.fat) { el.innerHTML='<div style="font-size:13px;color:var(--t3)">尚未設定目標，請至「設定」頁面輸入目標體重與體脂率。</div>'; return; }
   if (!records.length) { el.innerHTML='<div style="font-size:13px;color:var(--t3)">尚無紀錄，無法計算達成進度。</div>'; return; }
   const first=records[0], last=records[records.length-1];
+  const base = compareDate ? (records.find(r=>r.date===compareDate) || first) : first;
   const bar = (label, cur, start, target, unit) => {
     const pct=goalPct(cur,start,target), clr=pctColor(pct);
     const diff=(cur-target).toFixed(1);
     const ds=parseFloat(diff)===0?'已達標！':parseFloat(diff)>0?`還差 ${diff} ${unit}`:`超標 ${Math.abs(diff)} ${unit}`;
     const valText = goalVisible ? `${cur.toFixed(1)} ${unit} → 目標 ${target} ${unit}` : '';
-    const pctText = `${pct}%`;
+    const pctText = goalVisible ? `${pct}%` : '';
     const dsText = goalVisible ? ds : '';
     const barWidth = pct;
     return `<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px"><span style="font-size:13px;font-weight:500">${label}</span><span style="font-size:12px;color:var(--t2)">${valText}</span></div><div class="pb-wrap"><div class="pb-fill" style="width:${barWidth}%;background:${clr}"></div></div><div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:var(--t3)">${dsText}</span><span style="font-size:13px;font-weight:500;color:${clr}">${pctText}</span></div></div>`;
   };
   let html='';
-  if (goal.weight!=null) html+=bar('體重目標',last.weight,first.weight,goal.weight,'kg');
-  if (goal.fat!=null) html+=bar('體脂率目標',last.fat,first.fat,goal.fat,'%');
+  if (goal.weight!=null) html+=bar('體重目標',last.weight,base.weight,goal.weight,'kg');
+  if (goal.fat!=null) html+=bar('體脂率目標',last.fat,base.fat,goal.fat,'%');
   el.innerHTML=html;
+
+  // 計算平均進度，顯示鼓勵語
+  const pcts = [];
+  if (goal.weight!=null) pcts.push(goalPct(last.weight,first.weight,goal.weight));
+  if (goal.fat!=null) pcts.push(goalPct(last.fat,first.fat,goal.fat));
+  const avgPct = pcts.reduce((a,b)=>a+b,0) / pcts.length;
+  const encouragements = [
+    { min:100, text:'🎉 太棒了！目標達成！' },
+    { min:80,  text:'🔥 快到了，再堅持一下！' },
+    { min:60,  text:'💪 已經過一半了，繼續加油！' },
+    { min:40,  text:'🌱 穩定進步中，很好！' },
+    { min:20,  text:'👣 還在努力的路上～' },
+    { min:0,   text:'🐣 剛開始，加油！每一步都算數！' },
+  ];
+  const msg = encouragements.find(e => avgPct >= e.min)?.text || '';
+  const encEl = document.getElementById('goal-encouragement');
+  if (encEl) encEl.textContent = msg;
 }
 
 function renderDashboard() {
@@ -422,6 +478,7 @@ function renderDashboard() {
     renderGoalProgress(); renderChart(); return;
   }
   const first=records[0], last=records[records.length-1];
+  const base = compareDate ? (records.find(r=>r.date===compareDate) || first) : first;
   const bmi=calcBMI(last.weight,profile.height), bi=bmiInfo(bmi);
   document.getElementById('s-weight').textContent=last.weight.toFixed(1);
   document.getElementById('s-fat').textContent=last.fat.toFixed(1);
@@ -430,15 +487,22 @@ function renderDashboard() {
   document.getElementById('bmi-big').textContent=bmi?bmi.toFixed(1):'--';
   const tag=document.getElementById('bmi-tag'); tag.textContent=bi.text; tag.className='tag '+bi.cls;
   document.getElementById('bmi-pin').style.left=bmiLeft(bmi)+'%';
-  const wd=last.weight-first.weight, fd=last.fat-first.fat;
+  const wd=last.weight-base.weight, fd=last.fat-base.fat;
   const wEl=document.getElementById('d-w'), fEl=document.getElementById('d-f');
-  const unit = '<span style="font-size:13px;font-weight:400;color:var(--t2);margin-left:3px">';
+  const unit = '<span style="font-size:12px;font-weight:400;color:var(--t2);margin-left:3px">';
   wEl.innerHTML=(wd>=0?'+':'')+wd.toFixed(1)+unit+'kg</span>';
   fEl.innerHTML=(fd>=0?'+':'')+fd.toFixed(1)+unit+'%</span>';
-  wEl.style.color=wd>0?'#E24B4A':wd<0?'#3B6D11':'var(--t2)';
-  fEl.style.color=fd>0?'#E24B4A':fd<0?'#3B6D11':'var(--t2)';
-  document.getElementById('d-w-sub').textContent=`起始日 ${first.date}`;
-  document.getElementById('d-f-sub').textContent=`起始日 ${first.date}`;
+  const wColor = wd>0?'#E24B4A':wd<0?'#3B6D11':'var(--t2)';
+  const fColor = fd>0?'#E24B4A':fd<0?'#3B6D11':'var(--t2)';
+  wEl.style.color = wColor;
+  fEl.style.color = fColor;
+  const wCard = wEl.closest('div[style*="border-left"]');
+  const fCard = fEl.closest('div[style*="border-left"]');
+  if (wCard) wCard.style.borderLeftColor = wd>0?'#E24B4A':wd<0?'#3B6D11':'#888780';
+  if (fCard) fCard.style.borderLeftColor = fd>0?'#E24B4A':fd<0?'#3B6D11':'#888780';
+  const baseLabel = `從 ${base.date} 開始`;
+  document.getElementById('d-w-sub').textContent=baseLabel;
+  document.getElementById('d-f-sub').textContent=baseLabel;
   renderGoalProgress(); renderChart();
 }
 
@@ -471,22 +535,35 @@ function renderHistory() {
     first:{bg:'#E3F2FD',text:'#0D3C6E'},
   };
   el.innerHTML='<div class="sticker-grid">' + sorted.map((r,i)=>{
-    const prev=sorted[i+1];
+    const isCompare = r.date === (compareDate || records[0].date);
     let t;
-    if (!prev) t=theme.first;
-    else {
-      const diff=r.weight-prev.weight;
+    if (isCompare) {
+      t = theme.first;
+    } else {
+      const prev = sorted[i+1];
+      const diff = prev ? r.weight - prev.weight : 0;
       t = diff < -0.05 ? theme.down : diff > 0.05 ? theme.up : theme.same;
     }
-    const arrow = prev ? (r.weight-prev.weight < -0.05 ? ' ↓' : r.weight-prev.weight > 0.05 ? ' ↑' : '') : '';
+    const prev = sorted[i+1];
+    const arrow = (!isCompare && prev) ? (r.weight-prev.weight < -0.05 ? ' ↓' : r.weight-prev.weight > 0.05 ? ' ↑' : '') : '';
     const icon = icons[i % icons.length];
-    return `<div class="sticker" style="background:${t.bg};color:${t.text};" title="${r.date}">
-      <button class="sticker-del" onclick="deleteRecord('${r.date}')" style="color:${t.text}">✕</button>
+    const outline = '';
+    const badge = '';
+    const popup = isCompare
+      ? `<div class="sticker-popup" style="background:#185FA5;cursor:default;" onclick="event.stopPropagation();">目前比較對象</div>`
+      : `<div class="sticker-popup" onclick="setCompare('${r.date}');event.stopPropagation();">設為比較對象</div>`;
+    return `<div class="sticker" style="background:${t.bg};color:${t.text};${outline}" onclick="togglePopup(this,event)" title="${r.date}">
+      <button class="sticker-del" onclick="deleteRecord('${r.date}');event.stopPropagation();" style="color:${t.text}">✕</button>
       <div class="sticker-date">${r.date.slice(5)}</div>
       <div class="sticker-icon"><img src="${icon}" style="width:28px;height:28px;object-fit:contain;" /></div>
       <div class="sticker-weight">${stickerWeightVisible ? r.weight.toFixed(1) : '--'}<span class="sticker-unit"> kg${arrow}</span></div>
+      ${badge}
+      ${popup}
     </div>`;
   }).join('') + '</div>';
+
+  // 點擊貼紙外部時關閉所有 popup
+  document.querySelectorAll('.sticker-popup').forEach(p => p.style.display = 'none');
 }
 
 function updatePreview() {
