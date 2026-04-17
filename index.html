@@ -65,6 +65,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .pb-fill { height:100%; border-radius:6px; transition:width 0.5s ease; }
 .toast { position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-80px); background:#27500A; color:#EAF3DE; padding:10px 20px; border-radius:var(--r); font-size:13px; font-weight:500; white-space:nowrap; transition:transform 0.3s ease,opacity 0.3s ease; opacity:0; z-index:999; pointer-events:none; }
 .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+.sticker-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(90px,1fr)); gap:12px; }
+.sticker { position:relative; border-radius:16px; padding:12px 8px 10px; text-align:center; cursor:default; transition:transform 0.15s; animation:pop 0.3s ease; }
+.sticker:hover { transform:scale(1.06) rotate(-1deg); }
+@keyframes pop { 0%{transform:scale(0.7);opacity:0} 80%{transform:scale(1.08)} 100%{transform:scale(1);opacity:1} }
+.sticker::before { content:''; position:absolute; inset:0; border-radius:16px; border:2.5px dashed rgba(0,0,0,0.13); pointer-events:none; }
+.sticker-date { font-size:10px; font-weight:500; opacity:0.7; margin-bottom:4px; letter-spacing:0.3px; }
+.sticker-icon { font-size:22px; line-height:1; margin-bottom:4px; }
+.sticker-weight { font-size:15px; font-weight:700; line-height:1.1; }
+.sticker-unit { font-size:10px; opacity:0.65; }
+.sticker-del { position:absolute; top:4px; right:4px; width:16px; height:16px; border-radius:50%; background:rgba(0,0,0,0.12); border:none; font-size:10px; line-height:16px; text-align:center; cursor:pointer; opacity:0; transition:opacity 0.15s; color:inherit; padding:0; }
+.sticker:hover .sticker-del { opacity:1; }
+.sticker-del:hover { background:rgba(226,75,74,0.25); }
 </style>
 </head>
 <body>
@@ -145,7 +157,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 
   <div id="tab-history" class="section">
     <div class="card">
-      <h3>所有紀錄</h3>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <h3 style="margin:0">我的紀錄集點卡</h3>
+        <span id="sticker-count" style="font-size:12px;color:var(--t3)"></span>
+      </div>
+      <p style="font-size:12px;color:var(--t3);margin-bottom:1rem">每次記錄都是一張貼紙，繼續加油！</p>
       <div id="history-list"><div class="empty">尚無紀錄，快去新增第一筆吧！</div></div>
     </div>
   </div>
@@ -476,6 +492,7 @@ async function init() {
     if (goal.weight) document.getElementById('g-weight').value=goal.weight;
     if (goal.fat) document.getElementById('g-fat').value=goal.fat;
     setSyncStatus('ok','已同步');
+    renderDashboard();
   } catch(e) {
     setSyncStatus('err','連線失敗');
     showToast('無法連線，請確認 Firestore 規則已設為允許讀寫');
