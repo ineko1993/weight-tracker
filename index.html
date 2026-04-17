@@ -30,11 +30,26 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .sync-dot.err { background:#E24B4A; }
 .sync-dot.syncing { background:#BA7517; animation:pulse 1s infinite; }
 @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
-.tab-bar { display:flex; gap:4px; margin-bottom:1.5rem; background:var(--bg2); padding:4px; border-radius:var(--rl); }
-.tab { flex:1; padding:8px; font-size:13px; font-weight:500; border:none; background:transparent; color:var(--t2); border-radius:var(--r); cursor:pointer; transition:all 0.15s; }
-.tab.active { background:var(--bg1); color:var(--t1); border:0.5px solid var(--bd); }
+.tab-bar { display:flex; gap:0; margin-bottom:1.5rem; background:var(--bg2); padding:4px; border-radius:var(--rl); position:relative; }
+.tab-indicator { position:absolute; top:4px; bottom:4px; background:var(--bg1); border:0.5px solid var(--bd); border-radius:var(--r); transition:left 0.22s cubic-bezier(0.4,0,0.2,1), width 0.22s cubic-bezier(0.4,0,0.2,1); z-index:0; pointer-events:none; }
+.tab { flex:1; padding:8px; font-size:13px; font-weight:500; border:none; background:transparent; color:var(--t2); border-radius:var(--r); cursor:pointer; transition:color 0.2s; position:relative; z-index:1; }
+.tab.active { color:var(--t1); background:transparent; }
 .section { display:none; }
-.section.active { display:block; }
+.section.active { display:block; animation:fadeIn 0.2s ease; padding-top:0.1px; }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+.section.active .card, .section.active .mc, .section.active .g2, .section.active .g3 { animation:fadeUp 0.25s ease both; }
+.section.active .card:nth-child(1), .section.active .g3:nth-child(1) { animation-delay:0.04s; }
+.section.active .card:nth-child(2), .section.active .g2:nth-child(2) { animation-delay:0.09s; }
+.section.active .card:nth-child(3) { animation-delay:0.13s; }
+.section.active .card:nth-child(4) { animation-delay:0.17s; }
+.section.active .card:nth-child(5) { animation-delay:0.21s; }
+@keyframes fadeUp { from{opacity:0} to{opacity:1} }
+.change-card { padding:1rem 1rem 1rem 1.25rem; border-radius:0 var(--r) var(--r) 0; background:var(--bg1); border-top:0.5px solid var(--bd); border-right:0.5px solid var(--bd); border-bottom:0.5px solid var(--bd); border-left:3px solid var(--line-color, #3B6D11); position:relative; animation:cardReveal 0.5s cubic-bezier(0.4,0,0.2,1) both; }
+.easter-egg { display:none; align-items:center; justify-content:flex-end; gap:6px; font-size:18px; position:absolute; bottom:0; right:1rem; left:0; padding:6px 0; }
+.easter-egg.show { display:flex; }
+@keyframes cardReveal { 0%{clip-path:inset(0 100% 0 0);opacity:0} 30%{clip-path:inset(0 100% 0 0);opacity:1} 100%{clip-path:inset(0 0% 0 0);opacity:1} }
+.change-card:nth-child(1) { animation-delay:0.05s; }
+.change-card:nth-child(2) { animation-delay:0.2s; }
 .g2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:1rem; }
 .g3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:1rem; }
 .mc { background:var(--bg2); border-radius:var(--r); padding:1rem; }
@@ -56,8 +71,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .seg { display:flex; gap:3px; background:var(--bg2); border-radius:var(--r); padding:3px; width:fit-content; }
 .seg-btn { padding:4px 14px; font-size:12px; font-weight:500; border:none; background:transparent; color:var(--t2); border-radius:6px; cursor:pointer; transition:all 0.15s; }
 .seg-btn.active { background:var(--bg1); color:var(--t1); border:0.5px solid var(--bd); }
-.hi { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:0.5px solid var(--bd); }
-.hi:last-child { border-bottom:none; }
 .tag { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:500; }
 .t-normal { background:#EAF3DE; color:#3B6D11; }
 .t-under { background:#E6F1FB; color:#185FA5; }
@@ -90,7 +103,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .login-input { width:100%; padding:10px 12px; font-size:15px; border:0.5px solid var(--bd); border-radius:var(--r); background:var(--bg2); color:var(--t1); outline:none; text-align:center; letter-spacing:1px; margin-bottom:12px; }
 .login-input:focus { border-color:var(--bd2); }
 .login-hint { font-size:11px; color:var(--t3); margin-top:8px; }
-.sticker-compare-badge { position:absolute; bottom:4px; left:50%; transform:translateX(-50%); background:#185FA5; color:#E6F1FB; font-size:9px; font-weight:500; padding:1px 6px; border-radius:10px; white-space:nowrap; }
 .sticker-popup { display:none; position:absolute; bottom:calc(100% + 8px); left:50%; transform:translateX(-50%); background:#5f5e5a; color:#fff; font-size:11px; font-weight:500; padding:6px 12px; border-radius:20px; white-space:nowrap; cursor:pointer; z-index:100; box-shadow:0 4px 12px rgba(0,0,0,0.25); }
 .sticker-popup:hover { background:#444441; }
 .sticker-popup::after { content:""; position:absolute; top:100%; left:50%; transform:translateX(-50%); border:5px solid transparent; border-top-color:#5f5e5a; }</style>
@@ -119,9 +131,10 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
     <button onclick="doLogout()" style="background:none;border:none;font-size:11px;color:var(--t3);cursor:pointer;padding:2px 6px;border-radius:4px;margin-left:6px">登出</button>
   </div>
 
-  <div class="tab-bar">
+  <div class="tab-bar" id="tab-bar">
+    <div class="tab-indicator" id="tab-indicator"></div>
     <button class="tab active" onclick="switchTab('dashboard')">總覽</button>
-    <button class="tab" onclick="switchTab('record')">記錄</button>
+    <button class="tab" onclick="switchTab('record')">新增</button>
     <button class="tab" onclick="switchTab('history')">歷史</button>
     <button class="tab" onclick="switchTab('profile')">設定</button>
   </div>
@@ -132,30 +145,35 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
       <div class="mc"><div class="lbl">最新體脂</div><div class="val" id="s-fat">--</div><div class="sub">%</div></div>
       <div class="mc"><div class="lbl">BMI 值</div><div class="val" id="s-bmi">--</div><div class="sub" id="s-bmi-lbl">--</div></div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 2fr;gap:10px;margin-bottom:1rem;align-items:start;">
+    <div style="display:grid;grid-template-columns:1fr 2fr;gap:10px;margin-bottom:1rem;align-items:stretch;" id="change-grid">
       <div style="display:flex;flex-direction:column;gap:10px;">
-        <div style="padding:1rem;border-left:3px solid #3B6D11;border-radius:0 var(--r) var(--r) 0;background:var(--bg1);border-top:0.5px solid var(--bd);border-right:0.5px solid var(--bd);border-bottom:0.5px solid var(--bd);">
+        <div class="change-card" id="d-w-card" style="--line-color:#3B6D11;flex:1;">
           <div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">體重總變化</div>
           <div class="val" id="d-w" style="font-size:20px">--<span style="font-size:12px;font-weight:400;color:var(--t2);margin-left:3px">kg</span></div>
           <div style="font-size:11px;color:var(--t3);margin-top:4px" id="d-w-sub">--</div>
         </div>
-        <div style="padding:1rem;border-left:3px solid #1D9E75;border-radius:0 var(--r) var(--r) 0;background:var(--bg1);border-top:0.5px solid var(--bd);border-right:0.5px solid var(--bd);border-bottom:0.5px solid var(--bd);">
+        <div class="change-card" id="d-f-card" style="--line-color:#1D9E75;flex:1;">
           <div style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px">體脂總變化</div>
           <div class="val" id="d-f" style="font-size:20px">--<span style="font-size:12px;font-weight:400;color:var(--t2);margin-left:3px">%</span></div>
           <div style="font-size:11px;color:var(--t3);margin-top:4px" id="d-f-sub">--</div>
         </div>
       </div>
-      <div class="card" style="margin-bottom:0">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
-          <h3 style="margin:0">目標達成進度</h3>
-          <div style="display:flex;align-items:center;gap:10px;">
-            <span id="goal-encouragement" style="font-size:12px;color:var(--t2)"></span>
-            <button id="eye-btn" onclick="toggleGoalVisibility()" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--t2);display:flex;align-items:center;" title="顯示/隱藏數值">
-            <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            </button>
+      <div style="position:relative;display:flex;flex-direction:column;">
+        <div class="change-card" style="--line-color:#378ADD;animation-delay:0.3s;flex:1;" id="goal-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+            <h3 style="margin:0">目標達成進度</h3>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span id="goal-encouragement" style="font-size:12px;color:var(--t2)"></span>
+              <button id="eye-btn" onclick="toggleGoalVisibility()" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--t2);display:flex;align-items:center;" title="顯示/隱藏數值">
+              <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
           </div>
+          <div id="goal-progress"><div style="font-size:13px;color:var(--t3)">尚未設定目標，請至「設定」頁面輸入目標體重與體脂率。</div></div>
         </div>
-        <div id="goal-progress"><div style="font-size:13px;color:var(--t3)">尚未設定目標，請至「設定」頁面輸入目標體重與體脂率。</div></div>
+        <div class="easter-egg" id="easter-egg">
+          <span>🌟</span><span>🐣</span><span>💪</span><span>🥚</span><span>✨</span>
+        </div>
       </div>
     </div>
     <div class="card">
@@ -295,11 +313,26 @@ function showMsg(id, text, color) {
   setTimeout(() => el.textContent = '', 2500);
 }
 
+const tabOrder = ['dashboard','record','history','profile'];
+let currentTabIndex = 0;
+
+function updateIndicator(index) {
+  const bar = document.getElementById('tab-bar');
+  const tabs = bar.querySelectorAll('.tab');
+  const indicator = document.getElementById('tab-indicator');
+  if (!indicator || !tabs[index]) return;
+  const tab = tabs[index];
+  indicator.style.left = tab.offsetLeft + 'px';
+  indicator.style.width = tab.offsetWidth + 'px';
+}
+
 window.switchTab = function(tab) {
-  const tabs = ['dashboard','record','history','profile'];
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i] === tab));
+  const newIndex = tabOrder.indexOf(tab);
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabOrder[i] === tab));
+  updateIndicator(newIndex);
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
+  currentTabIndex = newIndex;
   if (tab === 'dashboard') renderDashboard();
   if (tab === 'history') renderHistory();
 };
@@ -388,10 +421,13 @@ let compareDate = null;
 window.toggleGoalVisibility = function() {
   goalVisible = !goalVisible;
   const icon = document.getElementById('eye-icon');
+  const egg = document.getElementById('easter-egg');
   if (goalVisible) {
     icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+    if (egg) egg.classList.remove('show');
   } else {
     icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+    if (egg) egg.classList.add('show');
   }
   renderGoalProgress();
 };
@@ -440,8 +476,17 @@ function renderGoalProgress() {
     const valText = goalVisible ? `${cur.toFixed(1)} ${unit} → 目標 ${target} ${unit}` : '';
     const pctText = goalVisible ? `${pct}%` : '';
     const dsText = goalVisible ? ds : '';
-    const barWidth = pct;
-    return `<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px"><span style="font-size:13px;font-weight:500">${label}</span><span style="font-size:12px;color:var(--t2)">${valText}</span></div><div class="pb-wrap"><div class="pb-fill" style="width:${barWidth}%;background:${clr}"></div></div><div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:var(--t3)">${dsText}</span><span style="font-size:13px;font-weight:500;color:${clr}">${pctText}</span></div></div>`;
+    return `<div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
+        <span style="font-size:13px;font-weight:500">${label}</span>
+        <span style="font-size:12px;color:var(--t2)">${valText}</span>
+      </div>
+      <div class="pb-wrap"><div class="pb-fill" style="width:${pct}%;background:${clr}"></div></div>
+      <div style="display:flex;justify-content:space-between;overflow:hidden;transition:max-height 0.35s ease,opacity 0.25s ease;max-height:${goalVisible?'40px':'0'};opacity:${goalVisible?'1':'0'}">
+        <span style="font-size:11px;color:var(--t3)">${dsText}</span>
+        <span style="font-size:13px;font-weight:500;color:${clr}">${pctText}</span>
+      </div>
+    </div>`;
   };
   let html='';
   if (goal.weight!=null) html+=bar('體重目標',last.weight,base.weight,goal.weight,'kg');
@@ -464,6 +509,8 @@ function renderGoalProgress() {
   const msg = encouragements.find(e => avgPct >= e.min)?.text || '';
   const encEl = document.getElementById('goal-encouragement');
   if (encEl) encEl.textContent = msg;
+  const goalCard = document.querySelector('#tab-dashboard .change-card[style*="378ADD"], #tab-dashboard .change-card:last-child');
+  if (goalCard) goalCard.style.setProperty('--line-color', pctColor(avgPct));
 }
 
 function renderDashboard() {
@@ -497,14 +544,21 @@ function renderDashboard() {
   const fColor = fd>0?'#E24B4A':fd<0?'#3B6D11':'var(--t2)';
   wEl.style.color = wColor;
   fEl.style.color = fColor;
-  const wCard = wEl.closest('div[style*="border-left"]');
-  const fCard = fEl.closest('div[style*="border-left"]');
-  if (wCard) wCard.style.borderLeftColor = wd>0?'#E24B4A':wd<0?'#3B6D11':'#888780';
-  if (fCard) fCard.style.borderLeftColor = fd>0?'#E24B4A':fd<0?'#3B6D11':'#888780';
+  const wCard = document.getElementById('d-w-card');
+  const fCard = document.getElementById('d-f-card');
+  if (wCard) wCard.style.setProperty('--line-color', wd>0?'#E24B4A':wd<0?'#3B6D11':'#888780');
+  if (fCard) fCard.style.setProperty('--line-color', fd>0?'#E24B4A':fd<0?'#3B6D11':'#888780');
   const baseLabel = `從 ${base.date} 開始`;
   document.getElementById('d-w-sub').textContent=baseLabel;
   document.getElementById('d-f-sub').textContent=baseLabel;
   renderGoalProgress(); renderChart();
+  requestAnimationFrame(() => {
+    const card = document.getElementById('goal-card');
+    if (card && !card.dataset.heightLocked) {
+      card.style.minHeight = card.offsetHeight + 'px';
+      card.dataset.heightLocked = '1';
+    }
+  });
 }
 
 function renderHistory() {
@@ -653,6 +707,7 @@ window.doLogin = function() {
   document.getElementById('login-wrap').style.display = 'none';
   document.getElementById('main-app').style.display = 'block';
   document.getElementById('user-label').textContent = `ID: ${userId}`;
+  setTimeout(() => updateIndicator(0), 50);
   document.getElementById('r-date').value = new Date().toISOString().split('T')[0];
   ['r-weight','r-fat','r-muscle','r-note','r-date'].forEach(id => {
     const el = document.getElementById(id);
