@@ -373,19 +373,38 @@ function renderDashboard() {
 
 function renderHistory() {
   const el=document.getElementById('history-list');
-  if (!records.length) { el.innerHTML='<div class="empty">尚無紀錄</div>'; return; }
+  const countEl=document.getElementById('sticker-count');
+  if (!records.length) {
+    el.innerHTML='<div class="empty">尚無紀錄，快去新增第一筆吧！</div>';
+    if(countEl) countEl.textContent='';
+    return;
+  }
   const sorted=[...records].reverse();
-  el.innerHTML=sorted.map((r,i)=>{
-    const bmi=calcBMI(r.weight,profile.height), bi=bmiInfo(bmi);
+  if(countEl) countEl.textContent=`共 ${records.length} 張`;
+  const colors=[
+    {bg:'#FFF0F3',border:'#FFB3C1',text:'#8B1A2E',icon:'🍓'},
+    {bg:'#FFF8E1',border:'#FFD54F',text:'#7A5C00',icon:'🌟'},
+    {bg:'#E8F5E9',border:'#A5D6A7',text:'#1B5E20',icon:'🍀'},
+    {bg:'#E3F2FD',border:'#90CAF9',text:'#0D3C6E',icon:'💧'},
+    {bg:'#F3E5F5',border:'#CE93D8',text:'#4A148C',icon:'🌸'},
+    {bg:'#FFF3E0',border:'#FFCC80',text:'#7A3B00',icon:'🍊'},
+    {bg:'#E0F7FA',border:'#80DEEA',text:'#004D5E',icon:'🐬'},
+    {bg:'#FCE4EC',border:'#F48FB1',text:'#7B0032',icon:'🌷'},
+  ];
+  el.innerHTML='<div class="sticker-grid">' + sorted.map((r,i)=>{
+    const c=colors[i % colors.length];
+    const d=r.date.slice(5);
     const prev=sorted[i+1];
-    let wD='', fD='';
-    if (prev) {
-      const wd=r.weight-prev.weight, fd=r.fat-prev.fat;
-      wD=`<span style="font-size:11px;color:${wd>0?'#E24B4A':wd<0?'#3B6D11':'#888780'}">${wd>0?'+':''}${wd.toFixed(1)}</span>`;
-      fD=`<span style="font-size:11px;color:${fd>0?'#E24B4A':fd<0?'#3B6D11':'#888780'}">${fd>0?'+':''}${fd.toFixed(1)}</span>`;
-    }
-    return `<div class="hi"><div><div style="font-size:13px;font-weight:500">${r.date}</div>${r.note?`<div style="font-size:12px;color:var(--t2)">${r.note}</div>`:''} ${bmi?`<span class="tag ${bi.cls}" style="margin-top:3px;display:inline-block">BMI ${bmi.toFixed(1)}</span>`:''}</div><div style="display:flex;align-items:center;gap:8px"><div style="text-align:right"><div style="font-size:14px;font-weight:500;display:flex;gap:12px;align-items:baseline"><span>${r.weight.toFixed(1)} kg ${wD}</span><span style="color:var(--t2)">${r.fat.toFixed(1)}% ${fD}</span></div>${r.muscle?`<div style="font-size:11px;color:var(--t3)">肌肉 ${r.muscle.toFixed(1)} kg</div>`:''}</div><button class="del" onclick="deleteRecord('${r.date}')">&#215;</button></div></div>`;
-  }).join('');
+    let arrow='';
+    if(prev){ const diff=r.weight-prev.weight; arrow=diff>0?' ↑':diff<0?' ↓':''; }
+    const darkBorder = c.border;
+    return `<div class="sticker" style="background:${c.bg};color:${c.text};" title="${r.date}">
+      <button class="sticker-del" onclick="deleteRecord('${r.date}')" style="color:${c.text}">✕</button>
+      <div class="sticker-date">${d}</div>
+      <div class="sticker-icon">${c.icon}</div>
+      <div class="sticker-weight">${r.weight.toFixed(1)}<span class="sticker-unit"> kg${arrow}</span></div>
+    </div>`;
+  }).join('') + '</div>';
 }
 
 function updatePreview() {
