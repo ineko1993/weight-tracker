@@ -405,8 +405,9 @@ window.togglePopup = function(el, event) {
   if (!isVisible) popup.style.display = 'block';
 };
 
-window.setCompare = function(date) {
+window.setCompare = async function(date) {
   compareDate = (compareDate === date) ? null : date;
+  await setDoc(userDoc('settings/compare'), { date: compareDate || null });
   renderHistory();
   renderDashboard();
 };
@@ -665,7 +666,7 @@ window.doLogout = function() {
   if (unsubscribe) { unsubscribe(); unsubscribe = null; }
   localStorage.removeItem('wt_userId');
   userId = '';
-  records = []; profile = { height: 0, gender: 'male', year: 1990 }; goal = { weight: null, fat: null };
+  records = []; profile = { height: 0, gender: 'male', year: 1990 }; goal = { weight: null, fat: null }; compareDate = null;
   document.getElementById('main-app').style.display = 'none';
   document.getElementById('login-wrap').style.display = 'flex';
   document.getElementById('login-input').value = '';
@@ -687,12 +688,14 @@ function startListening() {
 async function init() {
   setSyncStatus('syncing','載入中...');
   try {
-    const [pSnap,gSnap] = await Promise.all([
+    const [pSnap,gSnap,cSnap] = await Promise.all([
       getDoc(userDoc('settings/profile')),
-      getDoc(userDoc('settings/goal'))
+      getDoc(userDoc('settings/goal')),
+      getDoc(userDoc('settings/compare'))
     ]);
     if (pSnap.exists()) profile = pSnap.data();
     if (gSnap.exists()) goal = gSnap.data();
+    if (cSnap.exists()) compareDate = cSnap.data().date || null;
     if (profile.height) document.getElementById('p-height').value = profile.height;
     if (profile.gender) document.getElementById('p-gender').value = profile.gender;
     if (profile.year) document.getElementById('p-year').value = profile.year;
