@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>體重體脂追蹤器</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg1: #ffffff; --bg2: #f5f5f4; --bg3: #eeede8;
+  --t1: #1a1a1a; --t2: #5f5e5a; --t3: #888780;
+  --bd: rgba(0,0,0,0.12); --bd2: rgba(0,0,0,0.22);
+  --r: 8px; --rl: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg1:#1c1c1b; --bg2:#2a2a28; --bg3:#222220; --t1:#f0ede8; --t2:#b4b2a9; --t3:#888780; --bd:rgba(255,255,255,0.1); --bd2:rgba(255,255,255,0.2); }
+}
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg3); color: var(--t1); padding: 1.5rem 1rem; min-height: 100vh; }
+.app { max-width: 720px; margin: 0 auto; }
+.sync-bar { display:flex; align-items:center; justify-content:flex-end; gap:6px; margin-bottom:0.75rem; font-size:12px; color:var(--t3); }
+.sync-dot { width:7px; height:7px; border-radius:50%; background:#888780; transition:background 0.3s; flex-shrink:0; }
+.sync-dot.ok { background:#639922; }
+.sync-dot.err { background:#E24B4A; }
+.sync-dot.syncing { background:#BA7517; animation:pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+.tab-bar { display:flex; gap:4px; margin-bottom:1.5rem; background:var(--bg2); padding:4px; border-radius:var(--rl); }
+.tab { flex:1; padding:8px; font-size:13px; font-weight:500; border:none; background:transparent; color:var(--t2); border-radius:var(--r); cursor:pointer; transition:all 0.15s; }
+.tab.active { background:var(--bg1); color:var(--t1); border:0.5px solid var(--bd); }
+.section { display:none; }
+.section.active { display:block; }
+.g2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:1rem; }
+.g3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:1rem; }
+.mc { background:var(--bg2); border-radius:var(--r); padding:1rem; }
+.mc .lbl { font-size:12px; color:var(--t2); margin-bottom:4px; }
+.mc .val { font-size:22px; font-weight:500; }
+.mc .sub { font-size:12px; color:var(--t3); margin-top:2px; }
+.card { background:var(--bg1); border:0.5px solid var(--bd); border-radius:var(--rl); padding:1rem 1.25rem; margin-bottom:1rem; }
+.card h3 { font-size:14px; font-weight:500; color:var(--t2); margin-bottom:1rem; }
+.fr { display:flex; gap:10px; margin-bottom:10px; }
+.fg { flex:1; }
+.fg label { display:block; font-size:12px; color:var(--t2); margin-bottom:4px; }
+.fg input, .fg select { width:100%; padding:8px 10px; font-size:14px; border:0.5px solid var(--bd); border-radius:var(--r); background:var(--bg2); color:var(--t1); outline:none; }
+.fg input:focus, .fg select:focus { border-color:var(--bd2); }
+.btn { width:100%; padding:10px; background:var(--t1); color:var(--bg1); border:none; border-radius:var(--r); font-size:14px; font-weight:500; cursor:pointer; transition:opacity 0.15s; }
+.btn:hover { opacity:0.8; }
+.btn:disabled { opacity:0.4; cursor:not-allowed; }
+.del { background:none; border:none; color:var(--t3); font-size:18px; cursor:pointer; padding:4px 8px; border-radius:4px; line-height:1; }
+.del:hover { color:#E24B4A; background:#FCEBEB; }
+.seg { display:flex; gap:3px; background:var(--bg2); border-radius:var(--r); padding:3px; width:fit-content; }
+.seg-btn { padding:4px 14px; font-size:12px; font-weight:500; border:none; background:transparent; color:var(--t2); border-radius:6px; cursor:pointer; transition:all 0.15s; }
+.seg-btn.active { background:var(--bg1); color:var(--t1); border:0.5px solid var(--bd); }
+.hi { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:0.5px solid var(--bd); }
+.hi:last-child { border-bottom:none; }
+.tag { display:inline-block; padding:2px 8px; border-radius:20px; font-size:11px; font-weight:500; }
+.t-normal { background:#EAF3DE; color:#3B6D11; }
+.t-under { background:#E6F1FB; color:#185FA5; }
+.t-over { background:#FAEEDA; color:#854F0B; }
+.t-obese { background:#FCEBEB; color:#A32D2D; }
+.bmi-scale { height:10px; border-radius:5px; background:linear-gradient(to right,#85B7EB 0%,#97C459 25%,#EF9F27 60%,#E24B4A 100%); margin:8px 0; position:relative; }
+.bmi-pin { position:absolute; top:-4px; width:18px; height:18px; border-radius:50%; background:var(--t1); border:2px solid var(--bg1); transform:translateX(-50%); transition:left 0.4s ease; }
+.bmi-lbl { display:flex; justify-content:space-between; font-size:10px; color:var(--t3); }
+.chart-wrap { position:relative; height:160px; }
+.empty { text-align:center; padding:2rem; color:var(--t3); font-size:13px; }
+.pb-wrap { background:var(--bg2); border-radius:6px; height:10px; overflow:hidden; margin:6px 0 2px; }
+.pb-fill { height:100%; border-radius:6px; transition:width 0.5s ease; }
+.toast { position:fixed; top:20px; left:50%; transform:translateX(-50%) translateY(-80px); background:#27500A; color:#EAF3DE; padding:10px 20px; border-radius:var(--r); font-size:13px; font-weight:500; white-space:nowrap; transition:transform 0.3s ease,opacity 0.3s ease; opacity:0; z-index:999; pointer-events:none; }
+.toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+<div class="app">
+
+  <div class="sync-bar">
+    <div class="sync-dot" id="sync-dot"></div>
+    <span id="sync-label">連線中...</span>
+  </div>
+
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('dashboard')">總覽</button>
+    <button class="tab" onclick="switchTab('record')">記錄</button>
+    <button class="tab" onclick="switchTab('history')">歷史</button>
+    <button class="tab" onclick="switchTab('profile')">設定</button>
+  </div>
+
+  <div id="tab-dashboard" class="section active">
+    <div class="g3">
+      <div class="mc"><div class="lbl">最新體重</div><div class="val" id="s-weight">--</div><div class="sub">kg</div></div>
+      <div class="mc"><div class="lbl">最新體脂</div><div class="val" id="s-fat">--</div><div class="sub">%</div></div>
+      <div class="mc"><div class="lbl">BMI 值</div><div class="val" id="s-bmi">--</div><div class="sub" id="s-bmi-lbl">--</div></div>
+    </div>
+    <div class="card">
+      <h3>目標達成進度</h3>
+      <div id="goal-progress"><div style="font-size:13px;color:var(--t3)">尚未設定目標，請至「設定」頁面輸入目標體重與體脂率。</div></div>
+    </div>
+    <div class="card">
+      <h3>BMI 狀態</h3>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+        <span style="font-size:28px;font-weight:500" id="bmi-big">--</span>
+        <span id="bmi-tag" class="tag">--</span>
+      </div>
+      <div class="bmi-scale"><div class="bmi-pin" id="bmi-pin" style="left:0%"></div></div>
+      <div class="bmi-lbl"><span>過輕 &lt;18.5</span><span>正常 18.5-24</span><span>過重 24-27</span><span>肥胖 &gt;27</span></div>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <h3 style="margin:0">近期趨勢（體重 kg）</h3>
+        <div class="seg">
+          <button class="seg-btn active" onclick="setRange('day',this)">日</button>
+          <button class="seg-btn" onclick="setRange('week',this)">週</button>
+          <button class="seg-btn" onclick="setRange('month',this)">月</button>
+        </div>
+      </div>
+      <div class="chart-wrap"><canvas id="chart"></canvas></div>
+      <div id="chart-note" style="font-size:11px;color:var(--t3);margin-top:6px;text-align:right"></div>
+    </div>
+    <div class="g2">
+      <div class="mc"><div class="lbl">體重總變化</div><div class="val" id="d-w">--</div><div class="sub" id="d-w-sub">與第一筆相比</div></div>
+      <div class="mc"><div class="lbl">體脂總變化</div><div class="val" id="d-f">--</div><div class="sub" id="d-f-sub">與第一筆相比</div></div>
+    </div>
+  </div>
+
+  <div id="tab-record" class="section">
+    <div class="card">
+      <h3>新增紀錄</h3>
+      <div class="fr">
+        <div class="fg"><label>日期</label><input type="date" id="r-date"></div>
+        <div class="fg"><label>體重 (kg)</label><input type="number" id="r-weight" placeholder="例：65.5" step="0.1" min="20" max="300"></div>
+      </div>
+      <div class="fr">
+        <div class="fg"><label>體脂率 (%)</label><input type="number" id="r-fat" placeholder="例：18.5" step="0.1" min="1" max="70"></div>
+        <div class="fg"><label>肌肉量 (kg) <span style="font-size:10px;color:var(--t3)">選填</span></label><input type="number" id="r-muscle" placeholder="例：50.0" step="0.1"></div>
+      </div>
+      <div class="fg" style="margin-bottom:10px;">
+        <label>備註 <span style="font-size:10px;color:var(--t3)">選填</span></label>
+        <input type="text" id="r-note" placeholder="例：運動後、早晨空腹">
+      </div>
+      <button class="btn" id="save-btn" onclick="saveRecord()">儲存紀錄</button>
+    </div>
+    <div class="card">
+      <h3>本次輸入結果預覽</h3>
+      <div id="preview" style="font-size:13px;color:var(--t3)">填寫上方資料後會即時顯示預覽。</div>
+    </div>
+  </div>
+
+  <div id="tab-history" class="section">
+    <div class="card">
+      <h3>所有紀錄</h3>
+      <div id="history-list"><div class="empty">尚無紀錄，快去新增第一筆吧！</div></div>
+    </div>
+  </div>
+
+  <div id="tab-profile" class="section">
+    <div class="card">
+      <h3>個人資料</h3>
+      <div class="fr">
+        <div class="fg"><label>身高 (cm)</label><input type="number" id="p-height" placeholder="例：170" min="100" max="250"></div>
+        <div class="fg"><label>性別</label><select id="p-gender"><option value="male">男性</option><option value="female">女性</option></select></div>
+      </div>
+      <div class="fg" style="margin-bottom:10px;"><label>出生年份</label><input type="number" id="p-year" placeholder="例：1990" min="1920" max="2010"></div>
+      <button class="btn" onclick="saveProfile()">儲存設定</button>
+      <div id="profile-msg" style="text-align:center;font-size:12px;margin-top:8px;height:16px;"></div>
+    </div>
+    <div class="card">
+      <h3>目標設定</h3>
+      <div class="fr">
+        <div class="fg"><label>目標體重 (kg)</label><input type="number" id="g-weight" placeholder="例：60.0" step="0.1"></div>
+        <div class="fg"><label>目標體脂率 (%)</label><input type="number" id="g-fat" placeholder="例：15.0" step="0.1"></div>
+      </div>
+      <button class="btn" onclick="saveGoal()">儲存目標</button>
+      <div id="goal-msg" style="text-align:center;font-size:12px;margin-top:8px;height:16px;"></div>
+    </div>
+    <div class="card">
+      <h3>體脂率參考標準</h3>
+      <table style="width:100%;font-size:13px;border-collapse:collapse;">
+        <tr style="color:var(--t2)"><td style="padding:4px 0">分類</td><td style="text-align:right">男性</td><td style="text-align:right">女性</td></tr>
+        <tr><td style="padding:4px 0;border-top:0.5px solid var(--bd)">運動員</td><td style="text-align:right">6–13%</td><td style="text-align:right">14–20%</td></tr>
+        <tr><td style="padding:4px 0;border-top:0.5px solid var(--bd)">健康</td><td style="text-align:right">14–17%</td><td style="text-align:right">21–24%</td></tr>
+        <tr><td style="padding:4px 0;border-top:0.5px solid var(--bd)">可接受</td><td style="text-align:right">18–24%</td><td style="text-align:right">25–31%</td></tr>
+        <tr><td style="padding:4px 0;border-top:0.5px solid var(--bd)">偏高</td><td style="text-align:right">&gt;25%</td><td style="text-align:right">&gt;32%</td></tr>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
+import Chart from "https://cdn.jsdelivr.net/npm/chart.js@4.4.0/auto/+esm";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyB7UjRupU8dBGKhjBPqtB3rg2rIYH7aMls",
+  authDomain: "inekoapp.firebaseapp.com",
+  projectId: "inekoapp",
+  storageBucket: "inekoapp.firebasestorage.app",
+  messagingSenderId: "652048804100",
+  appId: "1:652048804100:web:9462487afab4f1ed8a4851",
+  measurementId: "G-7JCP2VKP3R"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+let records = [], profile = { height: 0, gender: 'male', year: 1990 }, goal = { weight: null, fat: null };
+let trendChart = null, chartRange = 'day';
+
+function setSyncStatus(status, label) {
+  document.getElementById('sync-dot').className = 'sync-dot ' + status;
+  document.getElementById('sync-label').textContent = label;
+}
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+function showMsg(id, text, color) {
+  const el = document.getElementById(id);
+  el.textContent = text; el.style.color = color;
+  setTimeout(() => el.textContent = '', 2500);
+}
+
+window.switchTab = function(tab) {
+  const tabs = ['dashboard','record','history','profile'];
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', tabs[i] === tab));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'dashboard') renderDashboard();
+  if (tab === 'history') renderHistory();
+};
+
+function calcBMI(w, h) { return (!h || !w) ? null : w / ((h/100)**2); }
+function bmiInfo(bmi) {
+  if (!bmi) return { text:'--', cls:'' };
+  if (bmi < 18.5) return { text:'體重過輕', cls:'t-under' };
+  if (bmi < 24)   return { text:'正常範圍', cls:'t-normal' };
+  if (bmi < 27)   return { text:'體重過重', cls:'t-over' };
+  return { text:'肥胖', cls:'t-obese' };
+}
+function bmiLeft(bmi) { return !bmi ? 0 : Math.min(Math.max(((bmi-15)/20)*100, 2), 98); }
+
+window.setRange = function(range, btn) {
+  chartRange = range;
+  document.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderChart();
+};
+
+function getWeekKey(d) {
+  const dt = new Date(d), day = dt.getDay() === 0 ? 7 : dt.getDay();
+  const mon = new Date(dt); mon.setDate(dt.getDate() - day + 1);
+  return mon.toISOString().slice(0,10);
+}
+
+function aggregated(range) {
+  if (!records.length) return [];
+  if (range === 'day') return records.map(r => ({ label: r.date.slice(5), weight: r.weight }));
+  const buckets = {};
+  records.forEach(r => {
+    const key = range === 'week' ? getWeekKey(r.date) : r.date.slice(0,7);
+    if (!buckets[key]) buckets[key] = [];
+    buckets[key].push(r.weight);
+  });
+  return Object.entries(buckets).sort((a,b) => a[0].localeCompare(b[0])).map(([key, ws]) => ({
+    label: range === 'week' ? key.slice(5)+'週' : key.replace('-','/'),
+    weight: ws.reduce((a,b) => a+b,0) / ws.length
+  }));
+}
+
+function renderChart() {
+  const canvas = document.getElementById('chart');
+  if (!canvas) return;
+  if (trendChart) { trendChart.destroy(); trendChart = null; }
+  const data = aggregated(chartRange);
+  const note = document.getElementById('chart-note');
+  if (!data.length) {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle='#888780'; ctx.font='13px sans-serif'; ctx.textAlign='center';
+    ctx.fillText('尚無資料', canvas.width/2, 80);
+    note.textContent = ''; return;
+  }
+  note.textContent = chartRange==='week' ? '週平均值' : chartRange==='month' ? '月平均值' : `共 ${data.length} 筆`;
+  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const lc = isDark ? '#9FE1CB' : '#0F6E56';
+  const gc = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)';
+  const tc = isDark ? '#888780' : '#5F5E5A';
+  const datasets = [{ data: data.map(r => parseFloat(r.weight.toFixed(2))), borderColor:lc, borderWidth:2, pointRadius: data.length<=20?3:2, pointBackgroundColor:lc, tension:0.3, fill:false, label:'體重' }];
+  if (goal.weight) datasets.push({ data:Array(data.length).fill(goal.weight), borderColor:'#E24B4A', borderWidth:1.5, borderDash:[4,4], pointRadius:0, fill:false, label:'目標' });
+  trendChart = new Chart(canvas.getContext('2d'), {
+    type:'line',
+    data:{ labels:data.map(r=>r.label), datasets },
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:!!goal.weight, labels:{ color:tc, font:{size:11}, boxWidth:20 } }, tooltip:{ callbacks:{ label:c=>c.parsed.y.toFixed(1)+' kg' } } },
+      scales:{ x:{ grid:{color:gc}, ticks:{color:tc,font:{size:11},maxTicksLimit:10,maxRotation:0} }, y:{ grid:{color:gc}, ticks:{color:tc,font:{size:11},callback:v=>v.toFixed(1)} } }
+    }
+  });
+}
+
+function goalPct(cur, start, target) {
+  if (cur==null||target==null) return null;
+  if (start==null||start===target) return cur<=target?100:0;
+  const dir = target<start?-1:1;
+  if ((cur-start)*dir<0) return 0;
+  return Math.min(Math.round(Math.abs(cur-start)/Math.abs(start-target)*100),100);
+}
+function pctColor(p) { return p>=100?'#639922':p>=60?'#1D9E75':p>=30?'#BA7517':'#378ADD'; }
+
+function renderGoalProgress() {
+  const el = document.getElementById('goal-progress');
+  if (!goal.weight && !goal.fat) { el.innerHTML='<div style="font-size:13px;color:var(--t3)">尚未設定目標，請至「設定」頁面輸入目標體重與體脂率。</div>'; return; }
+  if (!records.length) { el.innerHTML='<div style="font-size:13px;color:var(--t3)">尚無紀錄，無法計算達成進度。</div>'; return; }
+  const first=records[0], last=records[records.length-1];
+  const bar = (label, cur, start, target, unit) => {
+    const pct=goalPct(cur,start,target), clr=pctColor(pct);
+    const diff=(cur-target).toFixed(1);
+    const ds=parseFloat(diff)===0?'已達標！':parseFloat(diff)>0?`還差 ${diff} ${unit}`:`超標 ${Math.abs(diff)} ${unit}`;
+    return `<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px"><span style="font-size:13px;font-weight:500">${label}</span><span style="font-size:12px;color:var(--t2)">${cur.toFixed(1)} ${unit} → 目標 ${target} ${unit}</span></div><div class="pb-wrap"><div class="pb-fill" style="width:${pct}%;background:${clr}"></div></div><div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:var(--t3)">${ds}</span><span style="font-size:13px;font-weight:500;color:${clr}">${pct}%</span></div></div>`;
+  };
+  let html='';
+  if (goal.weight!=null) html+=bar('體重目標',last.weight,first.weight,goal.weight,'kg');
+  if (goal.fat!=null) html+=bar('體脂率目標',last.fat,first.fat,goal.fat,'%');
+  el.innerHTML=html;
+}
+
+function renderDashboard() {
+  if (!records.length) {
+    ['s-weight','s-fat','s-bmi'].forEach(id=>document.getElementById(id).textContent='--');
+    document.getElementById('s-bmi-lbl').textContent='--';
+    document.getElementById('bmi-big').textContent='--';
+    document.getElementById('bmi-tag').textContent='尚無資料';
+    document.getElementById('bmi-tag').className='tag';
+    document.getElementById('bmi-pin').style.left='0%';
+    document.getElementById('d-w').textContent='--';
+    document.getElementById('d-f').textContent='--';
+    renderGoalProgress(); renderChart(); return;
+  }
+  const first=records[0], last=records[records.length-1];
+  const bmi=calcBMI(last.weight,profile.height), bi=bmiInfo(bmi);
+  document.getElementById('s-weight').textContent=last.weight.toFixed(1);
+  document.getElementById('s-fat').textContent=last.fat.toFixed(1);
+  document.getElementById('s-bmi').textContent=bmi?bmi.toFixed(1):'--';
+  document.getElementById('s-bmi-lbl').textContent=bi.text;
+  document.getElementById('bmi-big').textContent=bmi?bmi.toFixed(1):'--';
+  const tag=document.getElementById('bmi-tag'); tag.textContent=bi.text; tag.className='tag '+bi.cls;
+  document.getElementById('bmi-pin').style.left=bmiLeft(bmi)+'%';
+  const wd=last.weight-first.weight, fd=last.fat-first.fat;
+  const wEl=document.getElementById('d-w'), fEl=document.getElementById('d-f');
+  wEl.textContent=(wd>=0?'+':'')+wd.toFixed(1);
+  fEl.textContent=(fd>=0?'+':'')+fd.toFixed(1);
+  wEl.style.color=wd>0?'#E24B4A':wd<0?'#3B6D11':'var(--t2)';
+  fEl.style.color=fd>0?'#E24B4A':fd<0?'#3B6D11':'var(--t2)';
+  document.getElementById('d-w-sub').textContent=`起始 ${first.weight.toFixed(1)} kg（${first.date}）`;
+  document.getElementById('d-f-sub').textContent=`起始 ${first.fat.toFixed(1)}%（${first.date}）`;
+  renderGoalProgress(); renderChart();
+}
+
+function renderHistory() {
+  const el=document.getElementById('history-list');
+  if (!records.length) { el.innerHTML='<div class="empty">尚無紀錄</div>'; return; }
+  const sorted=[...records].reverse();
+  el.innerHTML=sorted.map((r,i)=>{
+    const bmi=calcBMI(r.weight,profile.height), bi=bmiInfo(bmi);
+    const prev=sorted[i+1];
+    let wD='', fD='';
+    if (prev) {
+      const wd=r.weight-prev.weight, fd=r.fat-prev.fat;
+      wD=`<span style="font-size:11px;color:${wd>0?'#E24B4A':wd<0?'#3B6D11':'#888780'}">${wd>0?'+':''}${wd.toFixed(1)}</span>`;
+      fD=`<span style="font-size:11px;color:${fd>0?'#E24B4A':fd<0?'#3B6D11':'#888780'}">${fd>0?'+':''}${fd.toFixed(1)}</span>`;
+    }
+    return `<div class="hi"><div><div style="font-size:13px;font-weight:500">${r.date}</div>${r.note?`<div style="font-size:12px;color:var(--t2)">${r.note}</div>`:''} ${bmi?`<span class="tag ${bi.cls}" style="margin-top:3px;display:inline-block">BMI ${bmi.toFixed(1)}</span>`:''}</div><div style="display:flex;align-items:center;gap:8px"><div style="text-align:right"><div style="font-size:14px;font-weight:500;display:flex;gap:12px;align-items:baseline"><span>${r.weight.toFixed(1)} kg ${wD}</span><span style="color:var(--t2)">${r.fat.toFixed(1)}% ${fD}</span></div>${r.muscle?`<div style="font-size:11px;color:var(--t3)">肌肉 ${r.muscle.toFixed(1)} kg</div>`:''}</div><button class="del" onclick="deleteRecord('${r.date}')">&#215;</button></div></div>`;
+  }).join('');
+}
+
+function updatePreview() {
+  const weight=parseFloat(document.getElementById('r-weight').value);
+  const fat=parseFloat(document.getElementById('r-fat').value);
+  const muscle=parseFloat(document.getElementById('r-muscle').value);
+  const note=document.getElementById('r-note').value.trim();
+  const el=document.getElementById('preview');
+  if (isNaN(weight)&&isNaN(fat)) { el.innerHTML='<span style="font-size:13px;color:var(--t3)">填寫上方資料後會即時顯示預覽。</span>'; return; }
+  const bmi=calcBMI(weight,profile.height), bi=bmiInfo(bmi);
+  const fm=(!isNaN(weight)&&!isNaN(fat))?weight*fat/100:null;
+  const lm=fm!=null?weight-fm:null;
+  let html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">';
+  if (!isNaN(weight)) html+=`<div style="font-size:13px"><span style="color:var(--t2)">體重</span> <strong>${weight.toFixed(1)} kg</strong></div>`;
+  if (!isNaN(fat)) html+=`<div style="font-size:13px"><span style="color:var(--t2)">體脂率</span> <strong>${fat.toFixed(1)}%</strong></div>`;
+  if (bmi) html+=`<div style="font-size:13px"><span style="color:var(--t2)">BMI</span> <strong>${bmi.toFixed(1)}</strong> <span class="tag ${bi.cls}">${bi.text}</span></div>`;
+  if (fm!=null) html+=`<div style="font-size:13px"><span style="color:var(--t2)">脂肪量</span> <strong>${fm.toFixed(1)} kg</strong></div>`;
+  if (lm!=null) html+=`<div style="font-size:13px"><span style="color:var(--t2)">去脂體重</span> <strong>${lm.toFixed(1)} kg</strong></div>`;
+  if (!isNaN(muscle)) html+=`<div style="font-size:13px"><span style="color:var(--t2)">肌肉量</span> <strong>${muscle.toFixed(1)} kg</strong></div>`;
+  html+='</div>';
+  if (note) html+=`<div style="font-size:12px;color:var(--t3)">備註：${note}</div>`;
+  el.innerHTML=html;
+}
+
+window.saveRecord = async function() {
+  const date=document.getElementById('r-date').value;
+  const weight=parseFloat(document.getElementById('r-weight').value);
+  const fat=parseFloat(document.getElementById('r-fat').value);
+  const muscle=parseFloat(document.getElementById('r-muscle').value)||null;
+  const note=document.getElementById('r-note').value.trim();
+  if (!date||isNaN(weight)||isNaN(fat)) { showToast('請填寫日期、體重與體脂率！'); return; }
+  const btn=document.getElementById('save-btn');
+  btn.disabled=true; btn.textContent='儲存中...';
+  setSyncStatus('syncing','同步中...');
+  try {
+    await setDoc(doc(db,'records',date),{ date,weight,fat,muscle,note });
+    document.getElementById('r-weight').value='';
+    document.getElementById('r-fat').value='';
+    document.getElementById('r-muscle').value='';
+    document.getElementById('r-note').value='';
+    document.getElementById('preview').innerHTML='<span style="font-size:13px;color:var(--t3)">填寫上方資料後會即時顯示預覽。</span>';
+    showToast('紀錄已成功新增！');
+    setSyncStatus('ok','已同步');
+  } catch(e) {
+    showToast('儲存失敗，請確認網路連線或 Firestore 規則');
+    setSyncStatus('err','同步失敗');
+  }
+  btn.disabled=false; btn.textContent='儲存紀錄';
+};
+
+window.deleteRecord = async function(date) {
+  setSyncStatus('syncing','同步中...');
+  try {
+    await deleteDoc(doc(db,'records',date));
+    setSyncStatus('ok','已同步');
+  } catch(e) {
+    showToast('刪除失敗'); setSyncStatus('err','同步失敗');
+  }
+};
+
+window.saveProfile = async function() {
+  profile.height=parseFloat(document.getElementById('p-height').value)||0;
+  profile.gender=document.getElementById('p-gender').value;
+  profile.year=parseInt(document.getElementById('p-year').value)||1990;
+  try {
+    await setDoc(doc(db,'settings','profile'),profile);
+    showMsg('profile-msg','設定已儲存！','#3B6D11');
+    renderDashboard();
+  } catch(e) { showMsg('profile-msg','儲存失敗','#E24B4A'); }
+};
+
+window.saveGoal = async function() {
+  goal={ weight:parseFloat(document.getElementById('g-weight').value)||null, fat:parseFloat(document.getElementById('g-fat').value)||null };
+  try {
+    await setDoc(doc(db,'settings','goal'),goal);
+    showMsg('goal-msg','目標已儲存！','#3B6D11');
+    renderDashboard();
+  } catch(e) { showMsg('goal-msg','儲存失敗','#E24B4A'); }
+};
+
+// 即時監聽 records（跨裝置自動同步）
+onSnapshot(collection(db,'records'), (snapshot) => {
+  records=[];
+  snapshot.forEach(d=>records.push(d.data()));
+  records.sort((a,b)=>a.date.localeCompare(b.date));
+  setSyncStatus('ok','已同步');
+  const active=document.querySelector('.section.active')?.id;
+  if (active==='tab-dashboard') renderDashboard();
+  if (active==='tab-history') renderHistory();
+});
+
+async function init() {
+  setSyncStatus('syncing','載入中...');
+  try {
+    const [pSnap,gSnap]=await Promise.all([
+      getDoc(doc(db,'settings','profile')),
+      getDoc(doc(db,'settings','goal'))
+    ]);
+    if (pSnap.exists()) profile=pSnap.data();
+    if (gSnap.exists()) goal=gSnap.data();
+    if (profile.height) document.getElementById('p-height').value=profile.height;
+    if (profile.gender) document.getElementById('p-gender').value=profile.gender;
+    if (profile.year) document.getElementById('p-year').value=profile.year;
+    if (goal.weight) document.getElementById('g-weight').value=goal.weight;
+    if (goal.fat) document.getElementById('g-fat').value=goal.fat;
+    setSyncStatus('ok','已同步');
+  } catch(e) {
+    setSyncStatus('err','連線失敗');
+    showToast('無法連線，請確認 Firestore 規則已設為允許讀寫');
+  }
+}
+
+document.getElementById('r-date').value=new Date().toISOString().split('T')[0];
+['r-weight','r-fat','r-muscle','r-note','r-date'].forEach(id=>{
+  const el=document.getElementById(id);
+  if (el) el.addEventListener('input',updatePreview);
+});
+
+init();
+</script>
+</body>
+</html>
